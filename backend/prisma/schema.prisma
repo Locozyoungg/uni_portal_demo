@@ -1,0 +1,679 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ──────────────────────────────────────
+// Core Tables
+// ──────────────────────────────────────
+
+model User {
+  id           String   @id @default(uuid())
+  email        String?  @unique
+  username     String   @unique
+  passwordHash String
+  role         Role     @default(STUDENT)
+  isActive     Boolean  @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  student          Student?          @relation
+  notifications    Notification[]
+  notificationPref NotificationPreference?
+  sentMessages     Message[]         @relation("Sender")
+  receivedMessages Message[]         @relation("Receiver")
+  auditLogs        AuditLog[]
+}
+
+enum Role {
+  STUDENT
+  ADMIN
+  STAFF
+}
+
+model Student {
+  id               String   @id @default(uuid())
+  userId           String   @unique
+  admissionNumber  String   @unique
+  firstName        String
+  lastName         String
+  photoUrl         String?
+  nationalId       String   @unique
+  phone            String?
+  email            String?
+  emergencyContact String?
+  yearOfStudy      Int      @default(1)
+  currentSemester  Int      @default(1)
+  feeStatus        FeeStatus @default(CLEAR)
+  enrollmentStatus EnrollmentStatus @default(ACTIVE)
+
+  facultyId    String
+  schoolId     String
+  departmentId String
+  programmeId  String
+
+  user         User          @relation(fields: [userId], references: [id])
+  faculty      Faculty       @relation(fields: [facultyId], references: [id])
+  school       School        @relation(fields: [schoolId], references: [id])
+  department   Department    @relation(fields: [departmentId], references: [id])
+  programme    Programme     @relation(fields: [programmeId], references: [id])
+
+  studentCourses      StudentCourse[]
+  examCards           ExamCard[]
+  academicRecords     AcademicRecord[]
+  transcripts         Transcript[]
+  invoices            Invoice[]
+  payments            Payment[]
+  scholarships        Scholarship[]
+  feeStatements       FeeStatement[]
+  borrowRecords       BorrowRecord[]
+  reservations        Reservation[]
+  allocations         Allocation[]
+  maintenanceRequests MaintenanceRequest[]
+  leaveApplications   LeaveApplication[]
+  defermentRequests   DefermentRequest[]
+  transferRequests    TransferRequest[]
+  clearances          Clearance[]
+  disciplinaryRecords DisciplinaryRecord[]
+  appointments        Appointment[]
+  counsellingRequests CounsellingRequest[]
+  voteRecords         VoteRecord[]
+  electionPermissions ElectionPermission[]
+  supportTickets      SupportTicket[]
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+enum FeeStatus {
+  CLEAR
+  PARTIAL
+  OUTSTANDING
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  DEFERRED
+  SUSPENDED
+  GRADUATED
+  WITHDRAWN
+}
+
+model Faculty {
+  id     String   @id @default(uuid())
+  name   String
+  code   String   @unique
+  schools School[]
+  students Student[]
+  createdAt DateTime @default(now())
+}
+
+model School {
+  id        String   @id @default(uuid())
+  name      String
+  code      String   @unique
+  facultyId String
+  faculty   Faculty  @relation(fields: [facultyId], references: [id])
+  departments Department[]
+  students   Student[]
+  createdAt  DateTime @default(now())
+}
+
+model Department {
+  id       String   @id @default(uuid())
+  name     String
+  code     String   @unique
+  schoolId String
+  school   School   @relation(fields: [schoolId], references: [id])
+  programmes Programme[]
+  courses    Course[]
+  students   Student[]
+  createdAt  DateTime @default(now())
+}
+
+model Programme {
+  id            String   @id @default(uuid())
+  name          String
+  code          String   @unique
+  departmentId  String
+  durationYears Int      @default(4)
+  department    Department @relation(fields: [departmentId], references: [id])
+  students      Student[]
+  createdAt     DateTime @default(now())
+}
+
+model Course {
+  id           String   @id @default(uuid())
+  code         String   @unique
+  name         String
+  credits      Int      @default(3)
+  semester     Int      @default(1)
+  year         Int      @default(1)
+  isActive     Boolean  @default(true)
+  departmentId String
+  department   Department @relation(fields: [departmentId], references: [id])
+  studentCourses StudentCourse[]
+  createdAt    DateTime @default(now())
+}
+
+model Semester {
+  id               String   @id @default(uuid())
+  name             String
+  year             Int
+  startDate        DateTime
+  endDate          DateTime
+  isCurrent        Boolean  @default(false)
+  registrationOpen Boolean  @default(false)
+  createdAt        DateTime @default(now())
+}
+
+// ──────────────────────────────────────
+// Academic Tables
+// ──────────────────────────────────────
+
+model StudentCourse {
+  id                 String   @id @default(uuid())
+  studentId          String
+  courseId           String
+  semesterId         String
+  status             CourseStatus @default(REGISTERED)
+  grade              String?
+  marks              Float?
+  attendancePercentage Float?
+  student            Student  @relation(fields: [studentId], references: [id])
+  course             Course   @relation(fields: [courseId], references: [id])
+  semester           Semester @relation(fields: [semesterId], references: [id])
+  createdAt          DateTime @default(now())
+
+  @@unique([studentId, courseId, semesterId])
+}
+
+enum CourseStatus {
+  REGISTERED
+  COMPLETED
+  DROPPED
+  FAILED
+  IN_PROGRESS
+}
+
+model ExamCard {
+  id         String   @id @default(uuid())
+  studentId  String
+  semesterId String
+  courses    Json
+  examDates  Json
+  venue      String?
+  status     String   @default("ISSUED")
+  issuedAt   DateTime @default(now())
+  student    Student  @relation(fields: [studentId], references: [id])
+  semester   Semester @relation(fields: [semesterId], references: [id])
+}
+
+model AcademicRecord {
+  id          String   @id @default(uuid())
+  studentId   String
+  semesterId  String
+  gpa         Float
+  cgpa        Float
+  totalCredits Int
+  rank        Int?
+  student     Student  @relation(fields: [studentId], references: [id])
+  semester    Semester @relation(fields: [semesterId], references: [id])
+  createdAt   DateTime @default(now())
+
+  @@unique([studentId, semesterId])
+}
+
+model Transcript {
+  id              String   @id @default(uuid())
+  studentId       String
+  issuedAt        DateTime @default(now())
+  courses         Json
+  cumulativeGPA   Float
+  classification  String?
+  student         Student  @relation(fields: [studentId], references: [id])
+}
+
+// ──────────────────────────────────────
+// Finance Tables
+// ──────────────────────────────────────
+
+model Invoice {
+  id         String   @id @default(uuid())
+  studentId  String
+  semesterId String
+  amount     Float
+  dueDate    DateTime
+  status     InvoiceStatus @default(PENDING)
+  items      Json
+  student    Student  @relation(fields: [studentId], references: [id])
+  semester   Semester @relation(fields: [semesterId], references: [id])
+  payments   Payment[]
+  createdAt  DateTime @default(now())
+}
+
+enum InvoiceStatus {
+  PENDING
+  PAID
+  OVERDUE
+  PARTIAL
+  CANCELLED
+}
+
+model Payment {
+  id         String   @id @default(uuid())
+  invoiceId  String
+  studentId  String
+  amount     Float
+  method     String
+  reference  String   @unique
+  status     String   @default("COMPLETED")
+  paidAt     DateTime @default(now())
+  invoice    Invoice  @relation(fields: [invoiceId], references: [id])
+  student    Student  @relation(fields: [studentId], references: [id])
+  createdAt  DateTime @default(now())
+}
+
+model Scholarship {
+  id        String   @id @default(uuid())
+  studentId String
+  name      String
+  amount    Float
+  provider  String
+  startDate DateTime
+  endDate   DateTime
+  status    String   @default("ACTIVE")
+  student   Student  @relation(fields: [studentId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model FeeStatement {
+  id            String   @id @default(uuid())
+  studentId     String
+  semesterId    String
+  totalCharges  Float
+  totalPayments Float
+  balance       Float
+  generatedAt   DateTime @default(now())
+  student       Student  @relation(fields: [studentId], references: [id])
+  semester      Semester @relation(fields: [semesterId], references: [id])
+
+  @@unique([studentId, semesterId])
+}
+
+// ──────────────────────────────────────
+// Library Tables
+// ──────────────────────────────────────
+
+model Book {
+  id              String   @id @default(uuid())
+  isbn            String   @unique
+  title           String
+  author          String
+  publisher       String?
+  category        String
+  totalCopies     Int      @default(1)
+  availableCopies Int      @default(1)
+  borrowRecords   BorrowRecord[]
+  reservations    Reservation[]
+  createdAt       DateTime @default(now())
+}
+
+model BorrowRecord {
+  id         String   @id @default(uuid())
+  studentId  String
+  bookId     String
+  borrowedAt DateTime @default(now())
+  dueDate    DateTime
+  returnedAt DateTime?
+  fine       Float    @default(0)
+  status     BorrowStatus @default(BORROWED)
+  student    Student  @relation(fields: [studentId], references: [id])
+  book       Book     @relation(fields: [bookId], references: [id])
+}
+
+enum BorrowStatus {
+  BORROWED
+  RETURNED
+  OVERDUE
+  LOST
+}
+
+model Reservation {
+  id        String   @id @default(uuid())
+  studentId String
+  bookId    String
+  reservedAt DateTime @default(now())
+  expiresAt DateTime
+  status    String   @default("ACTIVE")
+  student   Student  @relation(fields: [studentId], references: [id])
+  book      Book     @relation(fields: [bookId], references: [id])
+}
+
+model DigitalResource {
+  id          String   @id @default(uuid())
+  title       String
+  url         String
+  category    String
+  accessLevel String   @default("STUDENT")
+  createdAt   DateTime @default(now())
+}
+
+// ──────────────────────────────────────
+// Hostel Tables
+// ──────────────────────────────────────
+
+model Hostel {
+  id        String   @id @default(uuid())
+  name      String
+  block     String
+  capacity  Int
+  type      HostelType
+  rooms     Room[]
+  createdAt DateTime @default(now())
+}
+
+enum HostelType {
+  MALE
+  FEMALE
+  MIXED
+}
+
+model Room {
+  id            String   @id @default(uuid())
+  hostelId      String
+  number        String
+  capacity      Int      @default(4)
+  occupiedBeds  Int      @default(0)
+  type          String   @default("SHARED")
+  hostel        Hostel   @relation(fields: [hostelId], references: [id])
+  allocations   Allocation[]
+  maintenance   MaintenanceRequest[]
+  createdAt     DateTime @default(now())
+}
+
+model Allocation {
+  id          String   @id @default(uuid())
+  studentId   String
+  roomId      String
+  bedNumber   Int
+  allocatedAt DateTime @default(now())
+  vacatedAt   DateTime?
+  status      String   @default("ACTIVE")
+  student     Student  @relation(fields: [studentId], references: [id])
+  room        Room     @relation(fields: [roomId], references: [id])
+
+  @@unique([studentId])
+}
+
+model MaintenanceRequest {
+  id         String   @id @default(uuid())
+  studentId  String
+  roomId     String
+  issue      String
+  priority   String   @default("MEDIUM")
+  status     String   @default("PENDING")
+  createdAt  DateTime @default(now())
+  resolvedAt DateTime?
+  student    Student  @relation(fields: [studentId], references: [id])
+  room       Room     @relation(fields: [roomId], references: [id])
+}
+
+// ──────────────────────────────────────
+// Student Services Tables
+// ──────────────────────────────────────
+
+model LeaveApplication {
+  id         String   @id @default(uuid())
+  studentId  String
+  type       String
+  startDate  DateTime
+  endDate    DateTime
+  reason     String
+  status     String   @default("PENDING")
+  reviewedBy String?
+  student    Student  @relation(fields: [studentId], references: [id])
+  createdAt  DateTime @default(now())
+}
+
+model DefermentRequest {
+  id         String   @id @default(uuid())
+  studentId  String
+  reason     String
+  semesterId String
+  status     String   @default("PENDING")
+  reviewedBy String?
+  student    Student  @relation(fields: [studentId], references: [id])
+  createdAt  DateTime @default(now())
+}
+
+model TransferRequest {
+  id               String   @id @default(uuid())
+  studentId        String
+  fromProgrammeId  String
+  toProgrammeId    String
+  reason           String
+  status           String   @default("PENDING")
+  reviewedBy       String?
+  student          Student  @relation(fields: [studentId], references: [id])
+  createdAt        DateTime @default(now())
+}
+
+model Clearance {
+  id        String   @id @default(uuid())
+  studentId String
+  type      String
+  status    String   @default("PENDING")
+  clearedBy String?
+  clearedAt DateTime?
+  remarks   String?
+  student   Student  @relation(fields: [studentId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model DisciplinaryRecord {
+  id        String   @id @default(uuid())
+  studentId String
+  incident  String
+  date      DateTime
+  action    String
+  issuedBy  String
+  student   Student  @relation(fields: [studentId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model Appointment {
+  id        String   @id @default(uuid())
+  studentId String
+  staffId   String
+  date      DateTime
+  time      String
+  purpose   String
+  status    String   @default("SCHEDULED")
+  student   Student  @relation(fields: [studentId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model CounsellingRequest {
+  id          String   @id @default(uuid())
+  studentId   String
+  type        String
+  description String
+  status      String   @default("PENDING")
+  scheduledAt DateTime?
+  student     Student  @relation(fields: [studentId], references: [id])
+  createdAt   DateTime @default(now())
+}
+
+// ──────────────────────────────────────
+// Notification & Messaging Tables
+// ──────────────────────────────────────
+
+model Announcement {
+  id               String   @id @default(uuid())
+  title            String
+  content          String
+  targetRole       Role     @default(STUDENT)
+  targetFaculty    String?
+  targetDepartment String?
+  priority         String   @default("NORMAL")
+  publishedAt      DateTime @default(now())
+  expiresAt        DateTime?
+  createdBy        String
+  createdAt        DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  title     String
+  message   String
+  type      String
+  isRead    Boolean  @default(false)
+  channel   String   @default("PORTAL")
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model NotificationPreference {
+  id            String  @id @default(uuid())
+  userId        String  @unique
+  emailEnabled  Boolean @default(true)
+  smsEnabled    Boolean @default(false)
+  pushEnabled   Boolean @default(true)
+  user          User    @relation(fields: [userId], references: [id])
+}
+
+model Message {
+  id         String   @id @default(uuid())
+  senderId   String
+  receiverId String
+  subject    String
+  content    String
+  isRead     Boolean  @default(false)
+  sentAt     DateTime @default(now())
+  sender     User     @relation("Sender", fields: [senderId], references: [id])
+  receiver   User     @relation("Receiver", fields: [receiverId], references: [id])
+}
+
+model SupportTicket {
+  id          String   @id @default(uuid())
+  studentId   String
+  subject     String
+  description String
+  status      String   @default("OPEN")
+  priority    String   @default("MEDIUM")
+  assignedTo  String?
+  student     Student  @relation(fields: [studentId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ──────────────────────────────────────
+// Election Tables (UNIELECTION INTEGRATION)
+// ──────────────────────────────────────
+
+model Election {
+  id            String   @id @default(uuid())
+  title         String
+  description   String
+  type          ElectionType
+  startDate     DateTime
+  endDate       DateTime
+  status        ElectionStatus @default(UPCOMING)
+  isVisible     Boolean  @default(true)
+  unielectionId String?
+  votingUrl     String?
+  candidates    Candidate[]
+  voteRecords   VoteRecord[]
+  permissions   ElectionPermission[]
+  createdAt     DateTime @default(now())
+}
+
+enum ElectionType {
+  STUDENT_BODY
+  FACULTY
+  DEPARTMENT
+  REFERENDUM
+}
+
+enum ElectionStatus {
+  UPCOMING
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+model Candidate {
+  id         String   @id @default(uuid())
+  electionId String
+  name       String
+  position   String
+  manifesto  String?
+  photoUrl   String?
+  voteCount  Int      @default(0)
+  election   Election @relation(fields: [electionId], references: [id])
+  voteRecords VoteRecord[]
+}
+
+model VoteRecord {
+  id              String   @id @default(uuid())
+  studentId       String
+  electionId      String
+  candidateId     String
+  votedAt         DateTime @default(now())
+  method          String   @default("PORTAL")
+  transactionHash String?
+  student         Student  @relation(fields: [studentId], references: [id])
+  election        Election @relation(fields: [electionId], references: [id])
+  candidate       Candidate @relation(fields: [candidateId], references: [id])
+
+  @@unique([studentId, electionId])
+}
+
+model ElectionPermission {
+  id         String   @id @default(uuid())
+  studentId  String
+  electionId String
+  canVote    Boolean  @default(true)
+  isEligible Boolean  @default(true)
+  verifiedAt DateTime?
+  student    Student  @relation(fields: [studentId], references: [id])
+  election   Election @relation(fields: [electionId], references: [id])
+
+  @@unique([studentId, electionId])
+}
+
+model IntegrationConfig {
+  id         String   @id @default(uuid())
+  name       String   @unique
+  value      String
+  isEncrypted Boolean @default(false)
+  updatedAt  DateTime @updatedAt
+  createdAt  DateTime @default(now())
+}
+
+model IntegrationLog {
+  id              String   @id @default(uuid())
+  event           String
+  requestPayload  Json?
+  responsePayload Json?
+  status          String
+  createdAt       DateTime @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String
+  action    String
+  entity    String
+  entityId  String?
+  changes   Json?
+  ipAddress String?
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+}

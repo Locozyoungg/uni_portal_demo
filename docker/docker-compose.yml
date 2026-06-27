@@ -1,0 +1,99 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ku-portal-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-kuportal}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-kuportal123}
+      POSTGRES_DB: ${POSTGRES_DB:-ku_portal}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-kuportal} -d ${POSTGRES_DB:-ku_portal}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ku-portal-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: ku-portal-redis
+    command: redis-server --appendonly yes ${REDIS_PASSWORD:+--requirepass $REDIS_PASSWORD}
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ku-portal-network
+
+  backend:
+    build:
+      context: ../backend
+      dockerfile: ../docker/Dockerfile.backend
+    container_name: ku-portal-backend
+    environment:
+      DATABASE_URL: "postgresql://${POSTGRES_USER:-kuportal}:${POSTGRES_PASSWORD:-kuportal123}@postgres:5432/${POSTGRES_DB:-ku_portal}?schema=public"
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      JWT_SECRET: ${JWT_SECRET:-ku-portal-jwt-secret}
+      JWT_EXPIRATION: 24h
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-ku-portal-refresh-secret}
+      JWT_REFRESH_EXPIRATION: 7d
+      UNIELECTION_API_URL: http://localhost:4000/api
+      UNIELECTION_API_KEY: mock-api-key
+      UNIELECTION_VOTING_JWT_SECRET: mock-voting-jwt-secret
+      INTEGRATION_MODE: mock
+      PORT: 3001
+      NODE_ENV: development
+      CORS_ORIGIN: http://localhost:3000
+      THROTTLE_TTL: 60
+      THROTTLE_LIMIT: 100
+    ports:
+      - "3001:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - ku-portal-network
+    volumes:
+      - ../backend/src:/app/src
+      - ../backend/prisma:/app/prisma
+
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: ../docker/Dockerfile.frontend
+    container_name: ku-portal-frontend
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:3001/api
+      NEXT_PUBLIC_APP_NAME: "KU Demo Portal"
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - ku-portal-network
+    volumes:
+      - ../frontend/src:/app/src
+      - ../frontend/public:/app/public
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  ku-portal-network:
+    driver: bridge
