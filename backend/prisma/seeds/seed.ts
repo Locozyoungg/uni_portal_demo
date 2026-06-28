@@ -1406,33 +1406,30 @@ async function main() {
   // Allocate remaining students
   const remainingAllocStudents = allocStudents.slice(3);
   for (const studentId of remainingAllocStudents) {
-    // Find a room with space
-    const studentRecord = await prisma.student.findUnique({ where: { id: studentId } });
-    const hostelType = studentRecord?.firstName ? randomChoice(['MALE', 'FEMALE']) : 'MIXED';
-    let hostelPool = createdHostels;
-    if (hostelType === 'MALE') hostelPool = createdHostels.filter(h => h.type === HostelType.MALE);
-    else if (hostelType === 'FEMALE') hostelPool = createdHostels.filter(h => h.type === HostelType.FEMALE);
-    const hostel = randomChoice(hostelPool);
-    const hostelRooms = createdRooms.filter(r => r.hostelId === hostel.id);
-
-    // Find a room with available space
+    // Find a room with space — retry up to 10 times with different hostels
     let assigned = false;
-    for (const room of hostelRooms) {
-      const occupancy = roomOccupancy[room.id] || 0;
-      const roomData = await prisma.room.findUnique({ where: { id: room.id } });
-      if (roomData && occupancy < roomData.capacity) {
-        await prisma.allocation.create({
-          data: {
-            studentId,
-            roomId: room.id,
-            bedNumber: occupancy + 1,
-            allocatedAt: randomDate(new Date('2026-01-08'), new Date('2026-02-01')),
-            status: 'ACTIVE',
-          },
-        });
-        roomOccupancy[room.id] = occupancy + 1;
-        assigned = true;
-        break;
+    for (let attempt = 0; attempt < 10 && !assigned; attempt++) {
+      const hostel = randomChoice(createdHostels);
+      const hostelRooms = createdRooms.filter(r => r.hostelId === hostel.id);
+      const shuffledRooms = hostelRooms.sort(() => Math.random() - 0.5);
+
+      for (const room of shuffledRooms) {
+        const occupancy = roomOccupancy[room.id] || 0;
+        const roomData = await prisma.room.findUnique({ where: { id: room.id } });
+        if (roomData && occupancy < roomData.capacity) {
+          await prisma.allocation.create({
+            data: {
+              studentId,
+              roomId: room.id,
+              bedNumber: occupancy + 1,
+              allocatedAt: randomDate(new Date('2026-01-08'), new Date('2026-02-01')),
+              status: 'ACTIVE',
+            },
+          });
+          roomOccupancy[room.id] = occupancy + 1;
+          assigned = true;
+          break;
+        }
       }
     }
     if (!assigned) continue;
