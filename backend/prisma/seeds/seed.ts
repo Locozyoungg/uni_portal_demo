@@ -9,6 +9,13 @@ import {
   HostelType,
   ElectionType,
   ElectionStatus,
+  School,
+  Department,
+  Programme,
+  Semester,
+  Course,
+  Book,
+  Hostel,
 } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 
@@ -523,7 +530,7 @@ async function main() {
     { name: 'School of Civil and Mechanical Engineering', code: 'ENG-CIV', facultyId: facultyEngineering.id },
     { name: 'School of Electrical and Information Engineering', code: 'ENG-ELEC', facultyId: facultyEngineering.id },
   ];
-  const schools = [];
+  const schools: School[] = [];
   for (const s of schoolsData) {
     schools.push(await prisma.school.create({ data: s }));
   }
@@ -547,7 +554,7 @@ async function main() {
     { name: 'Department of Mechanical Engineering', code: 'MEC', schoolId: schools[6].id },
     { name: 'Department of Electrical Engineering', code: 'ELE', schoolId: schools[7].id },
   ];
-  const departments = [];
+  const departments: Department[] = [];
   for (const d of deptsData) {
     departments.push(await prisma.department.create({ data: d }));
   }
@@ -576,7 +583,7 @@ async function main() {
     { name: 'BSc Software Engineering', code: 'BSC-SE', departmentId: departments.find(d => d.name === 'Department of Information Technology')!.id, durationYears: 4 },
     { name: 'BSc Applied Statistics', code: 'BSC-ASTA', departmentId: departments.find(d => d.name === 'Department of Statistics')!.id, durationYears: 4 },
   ];
-  const programmes = [];
+  const programmes: Programme[] = [];
   for (const p of programmesData) {
     programmes.push(await prisma.programme.create({ data: p }));
   }
@@ -592,7 +599,7 @@ async function main() {
     { name: 'Year 3 Semester 2', year: 2026, startDate: new Date('2026-01-08'), endDate: new Date('2026-04-30'), isCurrent: false, registrationOpen: false },
     { name: 'Year 4 Semester 1', year: 2026, startDate: new Date('2026-09-01'), endDate: new Date('2026-12-15'), isCurrent: true, registrationOpen: true },
   ];
-  const semesters = [];
+  const semesters: Semester[] = [];
   for (const s of semestersData) {
     semesters.push(await prisma.semester.create({ data: s }));
   }
@@ -603,7 +610,7 @@ async function main() {
   const allCourseCodes = ['CS', 'IT', 'BIO', 'CHE', 'PHY', 'MAT', 'STA', 'HIS', 'GEO', 'ART', 'MUS', 'ENG-L', 'CIV', 'MEC', 'ELE'];
 
   const courseCodeCounters: Record<string, number> = {};
-  const courses = [];
+  const courses: Course[] = [];
 
   // Map department names to their department IDs
   const deptMap: Record<string, string> = {};
@@ -1199,7 +1206,7 @@ async function main() {
   console.log('Creating library records...');
 
   // Books
-  const createdBooks = [];
+  const createdBooks: Book[] = [];
   for (const book of BOOKS_DATA) {
     const copies = randomInt(2, 8);
     const available = Math.max(0, copies - randomInt(0, Math.min(copies, 3)));
@@ -1335,7 +1342,7 @@ async function main() {
   // ── 8. Hostel Data ──
   console.log('Creating hostel records...');
 
-  const createdHostels = [];
+  const createdHostels: Hostel[] = [];
   for (const hData of HOSTEL_DATA) {
     const hostel = await prisma.hostel.create({ data: hData });
     createdHostels.push(hostel);

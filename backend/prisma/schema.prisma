@@ -143,6 +143,8 @@ model Programme {
   durationYears Int      @default(4)
   department    Department @relation(fields: [departmentId], references: [id])
   students      Student[]
+  transferRequestsFrom TransferRequest[] @relation("TransferFrom")
+  transferRequestsTo   TransferRequest[] @relation("TransferTo")
   createdAt     DateTime @default(now())
 }
 
@@ -169,6 +171,13 @@ model Semester {
   isCurrent        Boolean  @default(false)
   registrationOpen Boolean  @default(false)
   createdAt        DateTime @default(now())
+
+  studentCourses   StudentCourse[]
+  examCards        ExamCard[]
+  academicRecords  AcademicRecord[]
+  invoices         Invoice[]
+  feeStatements    FeeStatement[]
+  defermentRequests DefermentRequest[]
 }
 
 // ──────────────────────────────────────
@@ -448,6 +457,7 @@ model DefermentRequest {
   status     String   @default("PENDING")
   reviewedBy String?
   student    Student  @relation(fields: [studentId], references: [id])
+  semester   Semester @relation(fields: [semesterId], references: [id])
   createdAt  DateTime @default(now())
 }
 
@@ -460,6 +470,8 @@ model TransferRequest {
   status           String   @default("PENDING")
   reviewedBy       String?
   student          Student  @relation(fields: [studentId], references: [id])
+  fromProgramme    Programme @relation("TransferFrom", fields: [fromProgrammeId], references: [id])
+  toProgramme      Programme @relation("TransferTo", fields: [toProgrammeId], references: [id])
   createdAt        DateTime @default(now())
 }
 

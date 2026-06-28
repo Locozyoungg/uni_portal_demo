@@ -16,6 +16,7 @@ import {
   ApiQuery,
 } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
+import { ElectionStatus } from '@prisma/client';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -159,7 +160,7 @@ export class AdminController {
 
   @Patch('elections/config')
   @ApiOperation({ summary: 'Update election visibility', description: 'Update election visibility and status settings' })
-  updateElectionConfig(@Body() data: { id: string; isVisible?: boolean; status?: string }) {
+  updateElectionConfig(@Body() data: { id: string; isVisible?: boolean; status?: ElectionStatus }) {
     return this.adminService.updateElectionConfig(data.id, data);
   }
 

@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
+import { ElectionStatus } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
@@ -347,7 +348,7 @@ export class AdminService {
     return { success: true, data: elections };
   }
 
-  async updateElectionConfig(id: string, data: { isVisible?: boolean; status?: string }) {
+  async updateElectionConfig(id: string, data: { isVisible?: boolean; status?: ElectionStatus }) {
     const election = await this.prisma.election.findUnique({ where: { id } });
     if (!election) {
       throw new NotFoundException('Election not found');
