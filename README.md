@@ -70,17 +70,22 @@ cd uni_portal_demo
 cp .env.example .env
 cp docker/.env.example docker/.env
 
-# Start all services
-docker compose -f docker/docker-compose.yml up -d
+# Start all services (build + run)
+docker compose -f docker/docker-compose.yml up -d --build
 
-# Wait for services to be healthy, then seed the database
-docker compose -f docker/docker-compose.yml exec backend npx prisma db seed
+# The backend will automatically:
+#   1. Push the database schema (~20 seconds)
+#   2. Start the API server immediately
+#   3. Seed demo data in the background (~35-40 minutes)
 
 # Access the portal
 # Frontend: http://localhost:3000
 # Backend API: http://localhost:3001/api
 # Swagger Docs: http://localhost:3001/api/docs
 ```
+
+> **Note**: The login & API work immediately after the backend starts (~30 seconds). The seed fills
+> all demo data in the background — you can log in right away and watch data populate over time.
 
 ### Option 2: Local Development
 
@@ -90,8 +95,8 @@ cd backend
 cp .env.example .env
 npm install
 npx prisma generate
-npx prisma migrate dev
-npx prisma db seed
+npx prisma db push
+npx tsx prisma/seeds/seed.ts
 npm run start:dev
 # Backend running on http://localhost:3001
 
@@ -109,7 +114,7 @@ npm run dev
 ### Student
 | Field | Value |
 |-------|-------|
-| Admission Number | `P100/1234/2023` |
+| Admission Number | `P100/0033/2023` |
 | Password | `password123` |
 | Name | Jane Wanjiku |
 | Programme | BSc Computer Science |
@@ -261,15 +266,31 @@ The database uses PostgreSQL with Prisma ORM. Key tables:
 
 ### Seed Data
 
-The seed script generates realistic demo data:
-- **1,000 students** with Kenyan names, varied programmes and fee statuses
-- **200 courses** across 15 departments and 8 schools
-- **4 semesters** of academic history
-- **100 invoices** and **500 payments**
-- **50 books**, **200 borrow records**
-- **4 hostels**, **100 rooms**, **300 allocations**
-- **5 elections** with candidates, vote records, and results
-- **30 announcements**, **200+ notifications**
+The seed script generates realistic demo data (~37 minutes runtime):
+
+| Entity | Count |
+|--------|-------|
+| Users | 1,010 |
+| Students | 1,000 |
+| Courses | 200 |
+| StudentCourses | 26,053 |
+| AcademicRecords | 3,383 |
+| Transcripts | 301 |
+| Invoices | 102 |
+| Payments | 458 |
+| Scholarships | 31 |
+| Books | 48 |
+| BorrowRecords | 202 |
+| Reservations | 32 |
+| DigitalResources | 20 |
+| Hostels | 4 |
+| Rooms | 100 |
+| Allocations | 301 |
+| MaintenanceRequests | 13 |
+| Elections | 5 |
+| Candidates | 17 |
+| VoteRecords | 120 |
+| ElectionPermissions | 505 |
 
 ---
 
@@ -328,7 +349,8 @@ uni_portal_demo/
 ├── docker/
 │   ├── docker-compose.yml
 │   ├── Dockerfile.frontend
-│   └── Dockerfile.backend
+│   ├── Dockerfile.backend
+│   └── .env.example
 │
 ├── .env.example
 └── README.md
@@ -402,6 +424,57 @@ The architecture uses the **Repository Pattern** in the NestJS service layer. To
 4. Switch `INTEGRATION_MODE` from `mock` to `iframe` or `sdk`
 
 The strategy pattern in the elections module allows swapping the mock election backend for real UniElection integration without changing any frontend code.
+
+---
+
+## Docker Build Notes
+
+### Build Time
+
+| Stage | Approximate Time |
+|-------|-----------------|
+| Frontend build | ~8 minutes (first run), cached thereafter |
+| Backend build | ~8 minutes (first run), cached thereafter |
+| DB seed (first run) | ~37 minutes (runs in background) |
+| Subsequent starts | ~30 seconds (DB already populated) |
+
+### Key Dependencies
+
+- **OpenSSL**: Required by Prisma engine on Alpine; automatically installed in the Dockerfile
+- **tsx**: Used for running TypeScript seed files (replaced `ts-node` for ESM compatibility)
+- **lucide-react v0.303**: Icon library version pinned in frontend package.json
+
+---
+
+## Troubleshooting
+
+### Login fails with "Invalid credentials"
+
+The seed may still be running. Check with:
+```bash
+docker logs ku-portal-backend --tail 20
+```
+Wait for the seed to reach the student creation phase (users are created early).
+
+### Port already in use
+
+Stop any existing containers:
+```bash
+docker compose -f docker/docker-compose.yml down -v
+```
+
+### Prisma engine errors
+
+If you see OpenSSL errors, rebuild with:
+```bash
+docker compose -f docker/docker-compose.yml build --no-cache backend
+```
+
+### Re-run seed manually
+
+```bash
+docker exec ku-portal-backend npx tsx prisma/seeds/seed.ts
+```
 
 ---
 
