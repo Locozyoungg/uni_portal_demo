@@ -12,7 +12,7 @@ import {
   MapPin,
   User,
   Hash,
-  University,
+  School,
   Info,
   BookOpen,
 } from 'lucide-react';
@@ -215,7 +215,7 @@ export default function ExamCardPage() {
             {/* University Header */}
             <div className="border-b-2 border-ku-navy/10 bg-gradient-to-r from-ku-navy to-ku-blue p-6 text-center text-white sm:p-8">
               <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-ku-gold shadow-lg">
-                <University className="h-8 w-8 text-ku-navy" />
+                <School className="h-8 w-8 text-ku-navy" />
               </div>
               <h2 className="text-xl font-bold sm:text-2xl">KENYATTA UNIVERSITY</h2>
               <p className="mt-1 text-sm text-white/70">EXAMINATION CARD</p>

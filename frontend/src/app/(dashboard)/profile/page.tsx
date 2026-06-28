@@ -18,7 +18,7 @@ import {
   Award,
   FileText,
   PhoneCall,
-  IdCard,
+  Contact,
   Building,
   School,
   BookMarked,
@@ -220,7 +220,7 @@ function PersonalInfoTab({ profile }: { profile: StudentProfile }) {
             <ProfileField icon={User} label="First Name" value={profile.firstName} />
             <ProfileField icon={User} label="Last Name" value={profile.lastName} />
             <ProfileField
-              icon={IdCard}
+              icon={Contact}
               label="Admission Number"
               value={profile.admissionNumber}
             />
@@ -248,7 +248,7 @@ function PersonalInfoTab({ profile }: { profile: StudentProfile }) {
             <ProfileField icon={Clock} label="Current Semester" value={profile.currentSemester} />
             <ProfileField icon={Phone} label="Phone" value={profile.phone} />
             <ProfileField icon={Mail} label="Email" value={profile.email} />
-            <ProfileField icon={IdCard} label="National ID" value={profile.nationalId} />
+            <ProfileField icon={Contact} label="National ID" value={profile.nationalId} />
             <ProfileField
               icon={PhoneCall}
               label="Emergency Contact"

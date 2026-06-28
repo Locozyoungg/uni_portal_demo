@@ -354,10 +354,10 @@ function generateNationalId(): string {
   return padNumber(randomInt(10000000, 99999999), 8);
 }
 
-function generateEmail(firstName: string, lastName: string): string {
+function generateEmail(firstName: string, lastName: string, index: number): string {
   const initial = firstName[0].toLowerCase();
   const surname = lastName.toLowerCase();
-  return `${initial}.${surname}@students.ku.ac.ke`;
+  return `${initial}.${surname}.${index}@students.ku.ac.ke`;
 }
 
 function generateStaffEmail(firstName: string, lastName: string): string {
@@ -449,11 +449,11 @@ async function main() {
   await prisma.studentCourse.deleteMany();
   await prisma.course.deleteMany();
   await prisma.semester.deleteMany();
+  await prisma.student.deleteMany();
   await prisma.programme.deleteMany();
   await prisma.department.deleteMany();
   await prisma.school.deleteMany();
   await prisma.faculty.deleteMany();
-  await prisma.student.deleteMany();
   await prisma.user.deleteMany();
   console.log('  Cleaned all existing data.');
 
@@ -482,14 +482,8 @@ async function main() {
     },
   });
 
-  const demoStudentUser = await prisma.user.create({
-    data: {
-      username: 'P100/1234/2023',
-      email: 'j.wanjiku@students.ku.ac.ke',
-      passwordHash,
-      role: Role.STUDENT,
-    },
-  });
+  // Demo student (P100/0033/2023) is created inside the student loop at index 33
+  // with special handling via isDemoStudent flag
 
   // Create staff users for appointments
   const staffUsers: { id: string; firstName: string; lastName: string }[] = [];
@@ -683,12 +677,12 @@ async function main() {
     const prog = programmes.filter(p => p.departmentId === deptChoice.id);
     const progChoice = prog.length > 0 ? randomChoice(prog) : programmes[0];
 
-    const isDemoStudent = (admissionNumber === 'P100/1234/2023');
+    const isDemoStudent = (admissionNumber === 'P100/0033/2023');
 
     const user = await prisma.user.create({
       data: {
         username: admissionNumber,
-        email: isDemoStudent ? 'j.wanjiku@students.ku.ac.ke' : generateEmail(firstName, lastName),
+        email: isDemoStudent ? 'j.wanjiku@students.ku.ac.ke' : `student${i}@students.ku.ac.ke`,
         passwordHash: isDemoStudent ? passwordHash : await bcrypt.hash('password123', 8),
         role: Role.STUDENT,
       },
@@ -702,7 +696,7 @@ async function main() {
         lastName: isDemoStudent ? 'Wanjiku' : lastName,
         nationalId: isDemoStudent ? '12345678' : generateNationalId(),
         phone: generatePhone(),
-        email: isDemoStudent ? 'j.wanjiku@students.ku.ac.ke' : generateEmail(firstName, lastName),
+        email: isDemoStudent ? 'j.wanjiku@students.ku.ac.ke' : `student${i}@students.ku.ac.ke`,
         emergencyContact: generatePhone(),
         yearOfStudy: isDemoStudent ? 4 : yearOfStudy,
         currentSemester: isDemoStudent ? 1 : currentSemester,
@@ -725,7 +719,7 @@ async function main() {
 
   // Get demo student
   const demoStudent = await prisma.student.findUnique({
-    where: { admissionNumber: 'P100/1234/2023' },
+    where: { admissionNumber: 'P100/0033/2023' },
   });
   const demoStudentId = demoStudent!.id;
 
@@ -1731,7 +1725,7 @@ async function main() {
   console.log('  Created announcements.');
 
   // Notifications — 200
-  const allUserIds = [adminUser.id, staffUser.id, demoStudentUser.id];
+  const allUserIds = [adminUser.id, staffUser.id, demoStudent!.userId];
   const allStudentsWithUsers = await prisma.student.findMany({
     take: 60,
     skip: 0,
@@ -1783,7 +1777,7 @@ async function main() {
   for (const n of demoUnreadNotifications) {
     await prisma.notification.create({
       data: {
-        userId: demoStudentUser.id,
+        userId: demoStudent!.userId,
         title: n.title,
         message: n.message,
         type: n.type,
@@ -1797,7 +1791,7 @@ async function main() {
   // Demo student notification preferences
   await prisma.notificationPreference.create({
     data: {
-      userId: demoStudentUser.id,
+      userId: demoStudent!.userId,
       emailEnabled: true,
       smsEnabled: true,
       pushEnabled: true,

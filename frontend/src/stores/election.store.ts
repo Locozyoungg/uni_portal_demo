@@ -5,7 +5,8 @@ type IntegrationMode = 'mock' | 'iframe' | 'sdk';
 interface IntegrationLog {
   id: string;
   event: string;
-  status: string;
+  status: 'success' | 'error' | 'info';
+  details?: string;
   createdAt: string;
 }
 

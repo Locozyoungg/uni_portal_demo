@@ -8,7 +8,7 @@ import {
   Download,
   GraduationCap,
   Printer,
-  University,
+  School,
   ScrollText,
   User,
   Hash,
@@ -255,9 +255,9 @@ export default function TranscriptPage() {
           <CardContent className="p-0">
             <div className="border-b-2 border-ku-navy/10 bg-gradient-to-r from-ku-navy/5 to-transparent p-6 text-center sm:p-8">
               <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-ku-navy shadow-lg">
-                <University className="h-8 w-8 text-white" />
+                <School className="h-8 w-8 text-white" />
               </div>
-              <h2 className="text-xl font-bold text-ku-navy sm:text-2xl">KENYATTA UNIVERSITY</2>
+              <h2 className="text-xl font-bold text-ku-navy sm:text-2xl">KENYATTA UNIVERSITY</h2>
               <p className="mt-1 text-sm text-gray-500">Office of the Academic Registrar</p>
               <p className="text-sm font-semibold text-ku-gold">ACADEMIC TRANSCRIPT</p>
             </div>

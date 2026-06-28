@@ -51,9 +51,10 @@
     "@types/uuid": "^9.0.7",
     "prisma": "^5.8.0",
     "ts-node": "^10.9.2",
+    "tsx": "^4.7.0",
     "typescript": "^5.3.3"
   },
   "prisma": {
-    "seed": "ts-node prisma/seeds/seed.ts"
+    "seed": "tsx prisma/seeds/seed.ts"
   }
 }
