@@ -28,14 +28,14 @@ export class FinanceController {
   @Get('statement')
   @ApiOperation({ summary: 'Get fee statement' })
   async getFeeStatement(@CurrentUser() user: any) {
-    const student = await this.financeService.getStudentByUserId(user.sub);
+    const student = await this.financeService.getStudentByUserId(user.id);
     return this.financeService.getFeeStatement(student.id);
   }
 
   @Get('balance')
   @ApiOperation({ summary: 'Get current balance' })
   async getBalance(@CurrentUser() user: any) {
-    const student = await this.financeService.getStudentByUserId(user.sub);
+    const student = await this.financeService.getStudentByUserId(user.id);
     return this.financeService.getBalance(student.id);
   }
 
@@ -48,7 +48,7 @@ export class FinanceController {
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
-    const student = await this.financeService.getStudentByUserId(user.sub);
+    const student = await this.financeService.getStudentByUserId(user.id);
     return this.financeService.getPayments(
       student.id,
       page ? parseInt(page, 10) : 1,
@@ -59,7 +59,7 @@ export class FinanceController {
   @Get('invoices')
   @ApiOperation({ summary: 'Get all invoices' })
   async getInvoices(@CurrentUser() user: any) {
-    const student = await this.financeService.getStudentByUserId(user.sub);
+    const student = await this.financeService.getStudentByUserId(user.id);
     return this.financeService.getInvoices(student.id);
   }
 
@@ -73,7 +73,7 @@ export class FinanceController {
   @Get('scholarships')
   @ApiOperation({ summary: 'Get scholarships' })
   async getScholarships(@CurrentUser() user: any) {
-    const student = await this.financeService.getStudentByUserId(user.sub);
+    const student = await this.financeService.getStudentByUserId(user.id);
     return this.financeService.getScholarships(student.id);
   }
 
@@ -83,7 +83,7 @@ export class FinanceController {
     @CurrentUser() user: any,
     @Body() body: { invoiceId: string; amount: number; method?: string },
   ) {
-    const student = await this.financeService.getStudentByUserId(user.sub);
+    const student = await this.financeService.getStudentByUserId(user.id);
     return this.financeService.simulatePayment(
       student.id,
       body.invoiceId,

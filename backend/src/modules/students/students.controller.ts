@@ -60,7 +60,7 @@ export class StudentsController {
     description: 'Returns aggregated dashboard data for the authenticated student',
   })
   async getDashboard(@CurrentUser() user: any) {
-    const student = await this.studentsService.findByUserId(user?.sub);
+    const student = await this.studentsService.findByUserId(user?.id);
     if (!student) {
       return { success: false, message: 'Student profile not found' };
     }

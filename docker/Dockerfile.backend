@@ -17,5 +17,7 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/prisma ./prisma/
 COPY --from=builder /app/tsconfig.json ./
+COPY start.sh /app/start.sh
+RUN chmod +x /app/start.sh
 EXPOSE 3001
-CMD ["sh", "-c", "npx prisma db push --skip-generate && (npx tsx prisma/seeds/seed.ts &) && exec node dist/src/main.js"]
+CMD ["sh", "/app/start.sh"]

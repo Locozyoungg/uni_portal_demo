@@ -30,6 +30,14 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 export class AdminController {
   constructor(private adminService: AdminService) {}
 
+  // ==================== Dashboard ====================
+
+  @Get('dashboard')
+  @ApiOperation({ summary: 'Get admin dashboard', description: 'Aggregated stats, charts, and activity for admin panel' })
+  getDashboard() {
+    return this.adminService.getDashboard();
+  }
+
   // ==================== Students ====================
 
   @Get('students')
@@ -176,6 +184,36 @@ export class AdminController {
   @ApiOperation({ summary: 'Update branding configuration' })
   updateBranding(@Body() data: any) {
     return this.adminService.updateBranding(data);
+  }
+
+  // ==================== Settings ====================
+
+  @Get('settings')
+  @ApiOperation({ summary: 'Get all settings', description: 'Aggregated SSO, integration, system, and API key settings' })
+  async getSettings() {
+    const [sso, branding, apiKeys] = await Promise.all([
+      this.adminService.getSsoConfig(),
+      this.adminService.getBranding(),
+      this.adminService.getApiKeys(),
+    ]);
+    return {
+      success: true,
+      data: {
+        sso: sso.data,
+        branding: branding.data,
+        integration: {
+          mode: process.env.INTEGRATION_MODE || 'mock',
+          apiUrl: process.env.UNIELECTION_API_URL || '',
+          apiKey: '••••••••',
+        },
+        system: {
+          jwtExpiration: process.env.JWT_EXPIRATION || '24h',
+          corsOrigin: process.env.CORS_ORIGIN || '*',
+          throttleLimit: process.env.THROTTLE_LIMIT || '100',
+        },
+        apiKeys: apiKeys.data,
+      },
+    };
   }
 
   // ==================== SSO ====================

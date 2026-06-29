@@ -71,6 +71,7 @@ services:
     volumes:
       - ../backend/src:/app/src
       - ../backend/prisma:/app/prisma
+      - ../seed-data.sql.gz:/app/seed-data.sql.gz:ro
 
   frontend:
     build:

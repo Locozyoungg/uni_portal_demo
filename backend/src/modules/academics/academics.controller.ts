@@ -47,7 +47,7 @@ export class AcademicsController {
     @CurrentUser() user: any,
     @Query('semesterId') semesterId?: string,
   ) {
-    const student = await this.academicsService.getStudentByUserId(user.sub);
+    const student = await this.academicsService.getStudentByUserId(user.id);
     return this.academicsService.getRegisteredUnits(student.id, semesterId);
   }
 
@@ -57,7 +57,7 @@ export class AcademicsController {
     @CurrentUser() user: any,
     @Body() body: { courseIds: string[]; semesterId: string },
   ) {
-    const student = await this.academicsService.getStudentByUserId(user.sub);
+    const student = await this.academicsService.getStudentByUserId(user.id);
     return this.academicsService.registerUnits(
       student.id,
       body.courseIds,
@@ -69,7 +69,7 @@ export class AcademicsController {
   @ApiOperation({ summary: 'Drop a registered unit' })
   @ApiParam({ name: 'id', description: 'StudentCourse record ID' })
   async dropUnit(@CurrentUser() user: any, @Param('id') id: string) {
-    const student = await this.academicsService.getStudentByUserId(user.sub);
+    const student = await this.academicsService.getStudentByUserId(user.id);
     return this.academicsService.dropUnit(student.id, id);
   }
 
@@ -80,14 +80,14 @@ export class AcademicsController {
     @CurrentUser() user: any,
     @Query('semesterId') semesterId?: string,
   ) {
-    const student = await this.academicsService.getStudentByUserId(user.sub);
+    const student = await this.academicsService.getStudentByUserId(user.id);
     return this.academicsService.getResults(student.id, semesterId);
   }
 
   @Get('transcript')
   @ApiOperation({ summary: 'Get transcript' })
   async getTranscript(@CurrentUser() user: any) {
-    const student = await this.academicsService.getStudentByUserId(user.sub);
+    const student = await this.academicsService.getStudentByUserId(user.id);
     return this.academicsService.getTranscript(student.id);
   }
 
@@ -98,35 +98,35 @@ export class AcademicsController {
     @CurrentUser() user: any,
     @Query('semesterId') semesterId?: string,
   ) {
-    const student = await this.academicsService.getStudentByUserId(user.sub);
+    const student = await this.academicsService.getStudentByUserId(user.id);
     return this.academicsService.getExamCard(student.id, semesterId);
   }
 
   @Get('attendance')
   @ApiOperation({ summary: 'Get attendance summary' })
   async getAttendanceSummary(@CurrentUser() user: any) {
-    const student = await this.academicsService.getStudentByUserId(user.sub);
+    const student = await this.academicsService.getStudentByUserId(user.id);
     return this.academicsService.getAttendanceSummary(student.id);
   }
 
   @Get('cgpa')
   @ApiOperation({ summary: 'Get CGPA history' })
   async getCgpaHistory(@CurrentUser() user: any) {
-    const student = await this.academicsService.getStudentByUserId(user.sub);
+    const student = await this.academicsService.getStudentByUserId(user.id);
     return this.academicsService.getCgpaHistory(student.id);
   }
 
   @Get('course-history')
   @ApiOperation({ summary: 'Get course history across all semesters' })
   async getCourseHistory(@CurrentUser() user: any) {
-    const student = await this.academicsService.getStudentByUserId(user.sub);
+    const student = await this.academicsService.getStudentByUserId(user.id);
     return this.academicsService.getCourseHistory(student.id);
   }
 
   @Get('graduation-progress')
   @ApiOperation({ summary: 'Get graduation progress' })
   async getGraduationProgress(@CurrentUser() user: any) {
-    const student = await this.academicsService.getStudentByUserId(user.sub);
+    const student = await this.academicsService.getStudentByUserId(user.id);
     return this.academicsService.getGraduationProgress(student.id);
   }
 }
